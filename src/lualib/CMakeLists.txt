@@ -4,21 +4,31 @@
 # Please see the included DOCS/LICENSE.md for more information
 #
 
-file(GLOB sources *.c)
-list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/lua.c)
-list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/luac.c)
+CollectSourceFiles(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  PRIVATE_SOURCES
+  # Exclude
+  ${CMAKE_CURRENT_SOURCE_DIR}/Debugging
+  ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders)
 
-set(lua_STAT_SRCS
-  ${sources}
-)
+list(REMOVE_ITEM PRIVATE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/lua.c)
+list(REMOVE_ITEM PRIVATE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/luac.c)
 
-add_library(lualib STATIC ${lua_STAT_SRCS})
+add_library(lualib STATIC
+  ${PRIVATE_SOURCES})
 
+CollectIncludeDirectories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  PUBLIC_INCLUDES)
 
 target_include_directories(lualib
   PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_link_libraries(lualib
+    ${PUBLIC_INCLUDES}
   PRIVATE
-    trinity-dependency-interface)
+    ${CMAKE_CURRENT_BINARY_DIR})
+
+if (APPLE)
+  target_compile_definitions(lualib PUBLIC LUA_USE_MACOSX)
+elseif (UNIX)
+  target_compile_definitions(lualib PUBLIC LUA_USE_LINUX)
+endif()
